@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: book-recommender
+  annotations:
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [books.example.com]
+      secretName: book-recommender-tls
+  rules:
+    - host: books.example.com            # TODO: your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: book-recommender, port: { name: http } }

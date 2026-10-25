@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: book-recommender
+  labels: { app.kubernetes.io/name: book-recommender }
+spec:
+  type: ClusterIP
+  selector: { app.kubernetes.io/name: book-recommender }
+  ports:
+    - { name: http, port: 80, targetPort: http }

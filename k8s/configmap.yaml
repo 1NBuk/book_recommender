@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: book-recommender-config
+data:
+  BOOKREC_LOG_LEVEL: "INFO"
+  BOOKREC_DEFAULT_N: "10"
+  BOOKREC_MAX_N: "100"

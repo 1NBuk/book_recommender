@@ -1,0 +1,41 @@
+name: CD
+
+# Deploys the image built by CI for the same commit.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    environment: production        # add required reviewers in repo Settings -> Environments
+    concurrency: { group: deploy-production, cancel-in-progress: false }
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ github.event.workflow_run.head_sha }}" }
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_B64 }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Deploy
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          cd k8s
+          kustomize edit set image "book-recommender=${IMAGE,,}:sha-${SHA}"
+          kubectl apply -k .
+          kubectl -n book-recommender rollout status deployment/book-recommender --timeout=180s
+
+      - name: Roll back on failure
+        if: failure()
+        run: kubectl -n book-recommender rollout undo deployment/book-recommender

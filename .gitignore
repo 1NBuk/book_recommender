@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.env
+kaggle_token.txt
+.ipynb_checkpoints/
+
+data/raw/
+data/processed/
+feature_store/
+models_saved/
+experiments/recommendations_cache/
+experiments/figures/eda/

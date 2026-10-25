@@ -1,0 +1,67 @@
+stages:
+  ingest:
+    cmd: python scripts/run_pipeline.py --config configs/multi_source.yaml --stage ingest
+    deps:
+      - src/data/loader.py
+      - src/data/preprocessor.py
+      - src/data/splitter.py
+      - src/pipeline/config_manager.py
+      - configs/multi_source.yaml
+      - configs/base.yaml
+    outs:
+      - feature_store/items.parquet
+      - feature_store/interactions_train.parquet
+      - feature_store/interactions_val.parquet
+      - feature_store/interactions_test.parquet
+
+  features:
+    cmd: python scripts/run_pipeline.py --config configs/multi_source.yaml --stage features
+    deps:
+      - src/features/user_features.py
+      - src/features/item_features.py
+      - src/features/text_features.py
+      - feature_store/items.parquet
+      - feature_store/interactions_train.parquet
+    outs:
+      - feature_store/user_features.parquet
+      - feature_store/item_features.parquet
+      - feature_store/items_active.parquet
+      - feature_store/item_tfidf.npz
+
+  train:
+    cmd: python scripts/run_pipeline.py --config configs/multi_source.yaml --stage train
+    deps:
+      - src/models/popularity.py
+      - src/models/als.py
+      - src/models/content_based.py
+      - src/models/lgbm_ranker.py
+      - src/models/hybrid.py
+      - feature_store/interactions_train.parquet
+      - feature_store/user_features.parquet
+      - feature_store/item_features.parquet
+    outs:
+      - models_saved/popularity.joblib
+      - models_saved/als.joblib
+      - models_saved/content_based.joblib
+      - models_saved/lgbm.joblib
+      - models_saved/hybrid.joblib
+
+  evaluate:
+    cmd: python scripts/run_pipeline.py --config configs/multi_source.yaml --stage evaluate --n-users 3000
+    deps:
+      - src/evaluation/cache.py
+      - src/evaluation/fast_evaluator.py
+      - src/evaluation/ranking_metrics.py
+      - src/evaluation/business_metrics.py
+      - models_saved/popularity.joblib
+      - models_saved/als.joblib
+      - models_saved/content_based.joblib
+      - models_saved/lgbm.joblib
+      - models_saved/hybrid.joblib
+      - feature_store/interactions_test.parquet
+    metrics:
+      - experiments/metrics/orchestrator_results.json:
+          cache: false
+    plots:
+      - experiments/metrics/orchestrator_results.csv:
+          cache: false

@@ -1,0 +1,14 @@
+# Only if you run prometheus-operator / kube-prometheus-stack.
+# Apply with: kubectl apply -f k8s/optional/servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: book-recommender
+  namespace: book-recommender
+  labels:
+    release: kube-prometheus-stack   # must match your Prometheus serviceMonitorSelector
+spec:
+  selector:
+    matchLabels: { app.kubernetes.io/name: book-recommender }
+  endpoints:
+    - { port: http, path: /metrics, interval: 15s }

@@ -1,0 +1,7 @@
+# whitelist approach: ignore everything, then allow only what the image needs
+*
+!requirements-api.txt
+!src/api/
+!artifacts/
+**/__pycache__
+**/*.pyc
